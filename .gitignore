@@ -1,0 +1,35 @@
+# Folders and files to ignore in Android projects
+
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Build directory
+/build
+
+# Gradle files
+.gradle/
+
+# Local configuration file (sdk path, etc)
+/local.properties
+
+# IDE files
+.idea/
+*.iml
+.DS_Store
+
+# Keystore files
+*.jks
+*.keystore
+
+# Log files
+*.log
+
+# Captures folder
+captures/
+
+# Native build folders
+.cxx/
+.externalNativeBuild/
