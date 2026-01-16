@@ -1,18 +1,23 @@
 package com.example.arcbistro.data
 
+import androidx.annotation.DrawableRes
+import com.example.arcbistro.R
+
 data class MenuItem(
     val name: String,
     val price: Double,
-    val description: String,
-){}
-
-val menuItems = listOf(
-    MenuItem("Espresso",3.5,"A strong shot of espresso"),
-    MenuItem("Cappuccino",5.0,"Espresso with steamed milk and foam"),
-    MenuItem("Latte",4.5,"Espresso with steamed milk"),
-    MenuItem("Americano",4.0,"Espresso with hot water"),
-    MenuItem("Mocha",5.5,"Espresso with chocolate syrup and milk"),
-    MenuItem("Hot Chocolate",6.0,"Chocolate drink with hot milk"),
-    MenuItem("Black Tea",3.0,"Refreshing tea"),
+    val subtitle: String,
+    @DrawableRes val imageRes: Int,
+    val rating: Double,
+    val category: String
 )
 
+val menuItems = listOf(
+    MenuItem("Caffe Mocha", 4.53, "Deep Foam", R.drawable.coffee_1, 4.8, "Cappuccino"),
+    MenuItem("Flat White", 3.53, "Espresso", R.drawable.coffee_2, 4.8, "Latte"),
+    MenuItem("Cappuccino", 5.0, "Steamed Milk", R.drawable.coffee_3, 4.5, "Cappuccino"),
+    MenuItem("Americano", 4.0, "Hot Water", R.drawable.coffee_4, 4.2, "Americano"),
+    MenuItem("Latte", 4.5, "Espresso", R.drawable.coffee_5, 4.6, "Latte"),
+    MenuItem("Espresso", 3.5, "Strong Shot", R.drawable.coffee_2, 4.9, "Americano"),
+    MenuItem("Mocha", 5.5, "Chocolate", R.drawable.coffee_3, 4.7, "Cappuccino")
+)
