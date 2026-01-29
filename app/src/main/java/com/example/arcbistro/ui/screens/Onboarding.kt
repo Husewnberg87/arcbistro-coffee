@@ -38,7 +38,7 @@ import com.example.arcbistro.ui.theme.LightGray04
 import com.example.arcbistro.ui.theme.White06
 
 @Composable
-fun OnboardingScreen(){
+fun OnboardingScreen(onGetStartedClicked: () -> Unit){
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
     ){
@@ -95,7 +95,7 @@ fun OnboardingScreen(){
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = onGetStartedClicked,
                     modifier = Modifier
                         .fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -118,6 +118,6 @@ fun OnboardingScreen(){
 fun OnboardingScreenPreview(){
     // Wrap the screen in your theme
     ArcBistroTheme {
-        OnboardingScreen()
+        OnboardingScreen(onGetStartedClicked = {})
     }
 }

@@ -1,5 +1,5 @@
 package com.example.arcbistro.ui.screens
-import androidx.compose.animation.core.copy
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,380 +23,324 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-
-import androidx.compose.ui.res.painterResource
-
-import androidx.compose.ui.unit.dp
-import com.example.arcbistro.ui.theme.ArcBistroTheme
-import com.example.arcbistro.ui.theme.homeGradient1
-import com.example.arcbistro.ui.theme.homeGradient2
-
-import com.example.arcbistro.ui.theme.LightGray04
-import com.example.arcbistro.ui.theme.White06
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-
-import androidx.compose.material3.Card
-
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.arcbistro.ui.theme.ArcBistroTheme
-import com.example.arcbistro.ui.theme.homeGradient1
-import com.example.arcbistro.ui.theme.homeGradient2
-import com.example.arcbistro.R
-import com.example.arcbistro.ui.theme.LightGray04
-import com.example.arcbistro.ui.theme.White06
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.arcbistro.R
+import com.example.arcbistro.data.MenuItem
 import com.example.arcbistro.data.menuItems
+import com.example.arcbistro.ui.theme.ArcBistroTheme
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.DarkGray03
+import com.example.arcbistro.ui.theme.LightGray04
 import com.example.arcbistro.ui.theme.NormalGray
+import com.example.arcbistro.ui.theme.White06
+import com.example.arcbistro.ui.theme.homeGradient1
+import com.example.arcbistro.ui.theme.homeGradient2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(){
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        val screenWidthPx = this.constraints.maxWidth.toFloat()
-        val screenHeightPx = this.constraints.maxHeight.toFloat()
-
-        val startTransition = screenWidthPx * 0.20f
-        // Define where it ends (100% for a longer fade, or 75% for a very sharp one)
-        val endTransition = screenWidthPx * 0.85f
-
-//        val sharpGradient = Brush.horizontalGradient(
-//            colors = listOf(homeGradient2, homeGradient1),
-//            startX = startTransition,
-//            endX = endTransition
-//        )
-
-        val diagonalGradient = Brush.linearGradient(
-            colors = listOf(homeGradient2, homeGradient1),
-            // Define the start point at the bottom-left
-            start = Offset(x = 0f, y = screenHeightPx*0.7f),
-            // Define the end point at the top-right
-            end = Offset(x = screenWidthPx, y = 0f)
-        )
-
-
-        Box(
+fun HomeScreen() {
+    Scaffold(
+        bottomBar = { BottomNavigationBar() }
+    ) { innerPadding ->
+        BoxWithConstraints(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.35f)
-                .background(
-                    brush = diagonalGradient
-                )
-        )
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            val screenWidthPx = this.constraints.maxWidth.toFloat()
+            val screenHeightPx = this.constraints.maxHeight.toFloat()
 
-        Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 60.dp, horizontal = 15.dp)
-
-        ){
-            Text(
-                text = "Location",
-                color = LightGray04,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    // And override only the properties you need to change
-                    fontSize = 14.sp
-                )
-            )
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ){
-                Text(
-                    text= "Blitzen,Tanjungbalai",
-                    color = White06,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        // And override only the properties you need to change
-                        fontSize = 16.sp
-                    )
-                )
-                Icon(
-                    painter = painterResource(id = R.drawable.arrow_down),
-                    contentDescription = "Open dropdown",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clickable {
-                            // TO DO
-                        }
-                )
-            }
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(25.dp)
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-
-                // Spacer yerine bu daha temiz bir yöntemdir
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ){
-                var text by remember { mutableStateOf("") }
-                TextField(
-                    value = text,
-                    onValueChange = { newText ->
-                        text = newText
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),// Yüksekliği androidx . compose . material3 . Button ile eşitler
-                    placeholder = {
-                        Text(
-                            "Search coffee",
-                            color = LightGray04,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                            // And override only the properties you need to change
-                            fontSize = 14.sp)
-                        )
-                    },
-                    leadingIcon = { Icon(painter = painterResource(R.drawable.search),contentDescription = "Search") },
-                    shape = RoundedCornerShape(16.dp),
-
-                    // Tek satırlık metin alanı için bunu ekleyin, böylece metin uzadığında yükseklik artmaz
-                    singleLine = true,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = NormalGray, // Use your desired color
-                        unfocusedContainerColor = NormalGray, // Use your desired color
-                        disabledContainerColor = NormalGray,
-                        focusedIndicatorColor = Color.Transparent, // Hides the underline
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                        unfocusedLeadingIconColor = White06
-                    )
-                )
-
-
-                Button(
-                    onClick = { /* TODO */ },
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.size(56.dp), // Typical size for an icon button
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Brown01 // Use your desired color
-                    ),
-
-                    contentPadding = PaddingValues(0.dp) // No padding
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.filter), // Replace with your filter icon resource
-                        contentDescription = "Filter",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(24.dp) // Adjust the size as needed
-                    )
-                }
-
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(24.dp)
+            val diagonalGradient = Brush.linearGradient(
+                colors = listOf(homeGradient2, homeGradient1),
+                start = Offset(x = 0f, y = screenHeightPx * 0.7f),
+                end = Offset(x = screenWidthPx, y = 0f)
             )
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
-                    .clip(shape = RoundedCornerShape(16.dp)),
-
-            ){
-                Image(
-                    painter = painterResource(id = R.drawable.promo),
-                    contentDescription = "Promo Image",
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 30.dp, vertical = 15.dp)
-                        .align(Alignment.CenterStart),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ){
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFED5151)
-                        ),
-
-                    ) {
-                        Text(
-                            "Promo",
-                            color = White06,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                // And override only the properties you need to change
-                                fontSize = 14.sp
-                            ),
-                            modifier = Modifier
-                                .padding(horizontal = 5.dp,vertical = 5.dp)
-
-                        )
-                    }
-                    Row(
-
-                    ){
-                        Text(
-                            "Buy one ",
-                            color = White06,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        Text(
-                            "get",
-                            color = White06,
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier
-                                .background(
-                                    color = DarkGray03, // Or any color you prefer
-                                    shape = RoundedCornerShape(12.dp) // Optional: for rounded corners
-                                )
-                                .padding(horizontal = 8.dp)
-
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "one ", // Note the space
-                            color = White06,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            text = "FREE",
-                            color = White06,
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier
-                                .background(
-                                    color = DarkGray03, // Or any color you prefer
-                                    shape = RoundedCornerShape(8.dp) // Optional: for rounded corners
-                                )
-                                .padding(horizontal = 8.dp) // Add some padding so the text isn't cramped
-                        )
-                    }
-
-                }
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
+                    .fillMaxHeight(0.35f)
+                    .background(brush = diagonalGradient)
             )
 
-
-            val coffeeCategories = listOf("All Coffee", "Machiato", "Latte", "Americano", "Cappuccino")
-            var selectedCategory by remember { mutableStateOf("All Coffee") }
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ){
-                items(coffeeCategories) { category ->
-                    CategoryChip(
-                        name = category,
-                        isSelected = category == selectedCategory,
-                        onSelect = { selectedCategory = category }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 60.dp,start = 30.dp, end = 30.dp)
+            ) {
+                Text(
+                    text = "Location",
+                    color = LightGray04,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 14.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Blitzen,Tanjungbalai",
+                        color = White06,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 16.sp
+                        )
+                    )
+                    Icon(
+                        painter = painterResource(id = R.drawable.arrow_down),
+                        contentDescription = "Open dropdown",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clickable { /* TO DO */ }
                     )
                 }
+                Spacer(modifier = Modifier.height(25.dp))
 
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    var text by remember { mutableStateOf("") }
+                    TextField(
+                        value = text,
+                        onValueChange = { newText -> text = newText },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        placeholder = {
+                            Text(
+                                "Search coffee",
+                                color = LightGray04,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 14.sp
+                                )
+                            )
+                        },
+                        leadingIcon = { Icon(painter = painterResource(R.drawable.search), contentDescription = "Search") },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = NormalGray,
+                            unfocusedContainerColor = NormalGray,
+                            disabledContainerColor = NormalGray,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
+                            unfocusedLeadingIconColor = White06
+                        )
+                    )
 
-            }
-
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-            )
-
-            // Get your filtered list based on selectedCategory
-            val filteredMenuItems = if (selectedCategory == "All Coffee") {
-                menuItems
-            } else {
-                menuItems.filter { it.category == selectedCategory }
-            }
-
-// Chunk the list into rows of 2
-            val chunkedItems = filteredMenuItems.chunked(2)
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp) // Space between rows
-            ) {
-                items(chunkedItems) { rowItems ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp) // Space between cards
+                    Button(
+                        onClick = { /* TODO */ },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.size(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Brown01
+                        ),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        // Create a card for each item in the row
+                        Icon(
+                            painter = painterResource(id = R.drawable.filter),
+                            contentDescription = "Filter",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
-                        for (item in rowItems) {
-                            // The weight modifier is the key to creating the grid columns
-                            Box(modifier = Modifier.weight(1f)) {
-                                CoffeeCard(item = item)
-                            }
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .clip(shape = RoundedCornerShape(16.dp)),
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.promo),
+                        contentDescription = "Promo Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 30.dp, vertical = 15.dp)
+                            .align(Alignment.CenterStart),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFED5151)
+                            ),
+                        ) {
+                            Text(
+                                "Promo",
+                                color = White06,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontSize = 14.sp
+                                ),
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
+                            )
                         }
-                        // If the last row has only one item, we need a spacer to fill the gap
-                        if (rowItems.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f))
+                        Row {
+                            Text(
+                                "Buy one ",
+                                color = White06,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+
+                            Text(
+                                "get",
+                                color = White06,
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier
+                                    .background(
+                                        color = DarkGray03,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "one ",
+                                color = White06,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                text = "FREE",
+                                color = White06,
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier
+                                    .background(
+                                        color = DarkGray03,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 8.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val coffeeCategories = listOf("All Coffee", "Machiato", "Latte", "Americano", "Cappuccino")
+                var selectedCategory by remember { mutableStateOf("All Coffee") }
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(coffeeCategories) { category ->
+                        CategoryChip(
+                            name = category,
+                            isSelected = category == selectedCategory,
+                            onSelect = { selectedCategory = category }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val filteredMenuItems = if (selectedCategory == "All Coffee") {
+                    menuItems
+                } else {
+                    menuItems.filter { it.category == selectedCategory }
+                }
+
+                val chunkedItems = filteredMenuItems.chunked(2)
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(chunkedItems) { rowItems ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            for (item in rowItems) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    CoffeeCard(item = item)
+                                }
+                            }
+                            if (rowItems.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
             }
-
-            //bottomnavigation
-
-
         }
-
-
     }
 }
 
+@Composable
+fun BottomNavigationBar() {
+    var selectedItem by remember { mutableStateOf(0) }
+    val items = listOf("Home", "Favorites", "Cart", "Notifications")
+    val icons = listOf(
+        R.drawable.home,
+        R.drawable.heart,
+        R.drawable.bag,
+        R.drawable.notification
+    )
 
-
-
+    NavigationBar(
+        containerColor = Color.White,
+    ) {
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                icon = { Icon(painterResource(id = icons[index]), contentDescription = item) },
+                selected = selectedItem == index,
+                onClick = { selectedItem = index },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Brown01,
+                    unselectedIconColor = LightGray04,
+                    indicatorColor = Color.Transparent
+                )
+            )
+        }
+    }
+}
 
 @Composable
 fun CategoryChip(name: String, isSelected: Boolean, onSelect: () -> Unit) {
@@ -419,16 +363,14 @@ fun CategoryChip(name: String, isSelected: Boolean, onSelect: () -> Unit) {
     }
 }
 
-
 @Composable
-fun CoffeeCard(item: com.example.arcbistro.data.MenuItem) {
+fun CoffeeCard(item: MenuItem) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            // Image with Rating Badge
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -440,10 +382,9 @@ fun CoffeeCard(item: com.example.arcbistro.data.MenuItem) {
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
-                // Rating badge
                 Row(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
+                        .align(Alignment.TopEnd) 
                         .padding(8.dp)
                         .background(Color(0x99000000), RoundedCornerShape(12.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp),
@@ -452,7 +393,7 @@ fun CoffeeCard(item: com.example.arcbistro.data.MenuItem) {
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = "Rating",
-                        tint = Color(0xFFFFC107), // Yellow star color
+                        tint = Color(0xFFFFC107),
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -464,12 +405,9 @@ fun CoffeeCard(item: com.example.arcbistro.data.MenuItem) {
                     )
                 }
             }
-
-            // Text and Price section
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = item.name,
-                    color = DarkGray03,
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
@@ -477,22 +415,18 @@ fun CoffeeCard(item: com.example.arcbistro.data.MenuItem) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = item.subtitle,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = LightGray04,
                     fontSize = 13.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Price and Add button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        // Format the price to ensure two decimal places
                         text = "$ ${String.format("%.2f", item.price)}",
-                        color = DarkGray03,
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
@@ -516,11 +450,9 @@ fun CoffeeCard(item: com.example.arcbistro.data.MenuItem) {
     }
 }
 
-
 @Composable
-@Preview(showBackground = true, showSystemUi = true) // showSystemUi is also helpful
-fun HomeScreenPreview(){
-    // Wrap the screen in your theme
+@Preview(showBackground = true, showSystemUi = true)
+fun HomeScreenPreview() {
     ArcBistroTheme {
         HomeScreen()
     }
