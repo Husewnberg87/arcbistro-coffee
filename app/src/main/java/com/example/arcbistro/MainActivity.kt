@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.arcbistro.ui.screens.BasketScreen
 import com.example.arcbistro.ui.screens.HomeScreen
 import com.example.arcbistro.ui.screens.OnboardingScreen
 import com.example.arcbistro.ui.theme.ArcBistroTheme
@@ -35,7 +36,10 @@ fun AppNavigation() {
             })
         }
         composable("home") {
-            HomeScreen()
+            HomeScreen(navController = navController) // Pass NavController
+        }
+        composable("basket") { // Add new destination
+            BasketScreen()
         }
     }
 }

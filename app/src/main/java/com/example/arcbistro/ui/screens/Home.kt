@@ -55,6 +55,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.arcbistro.R
 import com.example.arcbistro.data.MenuItem
 import com.example.arcbistro.data.menuItems
@@ -69,9 +71,9 @@ import com.example.arcbistro.ui.theme.homeGradient2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     Scaffold(
-        bottomBar = { BottomNavigationBar() }
+        bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         BoxWithConstraints(
             modifier = Modifier
@@ -314,9 +316,10 @@ fun HomeScreen() {
 }
 
 @Composable
-fun BottomNavigationBar() {
+fun BottomNavigationBar(navController: NavController) {
     var selectedItem by remember { mutableStateOf(0) }
     val items = listOf("Home", "Favorites", "Cart", "Notifications")
+    val routes = listOf("home", "favorites", "basket", "notifications")
     val icons = listOf(
         R.drawable.home,
         R.drawable.heart,
@@ -331,7 +334,10 @@ fun BottomNavigationBar() {
             NavigationBarItem(
                 icon = { Icon(painterResource(id = icons[index]), contentDescription = item) },
                 selected = selectedItem == index,
-                onClick = { selectedItem = index },
+                onClick = { 
+                    selectedItem = index
+                    navController.navigate(routes[index])
+                },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Brown01,
                     unselectedIconColor = LightGray04,
@@ -454,6 +460,6 @@ fun CoffeeCard(item: MenuItem) {
 @Preview(showBackground = true, showSystemUi = true)
 fun HomeScreenPreview() {
     ArcBistroTheme {
-        HomeScreen()
+        HomeScreen(navController = rememberNavController())
     }
 }
