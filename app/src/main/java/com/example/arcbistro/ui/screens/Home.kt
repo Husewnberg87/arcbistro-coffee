@@ -301,7 +301,7 @@ fun HomeScreen(navController: NavController) {
                         ) {
                             for (item in rowItems) {
                                 Box(modifier = Modifier.weight(1f)) {
-                                    CoffeeCard(item = item)
+                                    CoffeeCard(item = item, onClick = { navController.navigate("detail/${item.id}") })
                                 }
                             }
                             if (rowItems.size == 1) {
@@ -370,11 +370,11 @@ fun CategoryChip(name: String, isSelected: Boolean, onSelect: () -> Unit) {
 }
 
 @Composable
-fun CoffeeCard(item: MenuItem) {
+fun CoffeeCard(item: MenuItem, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
         Column {
             Box(

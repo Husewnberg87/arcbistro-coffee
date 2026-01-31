@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 
 @Composable
-fun BasketScreen() {
+fun BasketScreen(navController: NavController) {
     Scaffold {
         Box(
             modifier = Modifier
@@ -29,6 +31,6 @@ fun BasketScreen() {
 @Composable
 fun BasketScreenPreview() {
     ArcBistroTheme {
-        BasketScreen()
+        BasketScreen(navController = rememberNavController())
     }
 }
