@@ -2,6 +2,8 @@
 
 An Android app for browsing and ordering coffee drinks.
 
+![Status](https://img.shields.io/badge/status-in%20development-yellow)
+
 ## About
 
 I built this app to practice Android development with Jetpack Compose. It displays a coffee menu where users can view different drinks, check prices and ratings, and add items to a shopping basket.
