@@ -1,60 +1,45 @@
-# ☕ ArcBistro Coffee
+# ArcBistro Coffee
 
-Welcome to **ArcBistro** - my friendly neighborhood coffee shop app! Whether you're a coffee enthusiast or just need your daily caffeine fix, I've got you covered.
+An Android app for browsing and ordering coffee drinks.
 
-## 📱 What's This All About?
+## About
 
-ArcBistro is my modern Android app that brings the coffee shop experience right to your fingertips. I built it so you can browse through a delicious menu of coffee drinks, check out detailed descriptions, add your favorites to the basket, and get ready to enjoy your perfect cup!
+I built this app to practice Android development with Jetpack Compose. It displays a coffee menu where users can view different drinks, check prices and ratings, and add items to a shopping basket.
 
-## ✨ What Can You Do?
+## Features
 
-- **Browse the Menu**: Explore a variety of coffee drinks from classic Americanos to creamy Cappuccinos
-- **View Details**: Tap on any drink to see more information, ratings, and customize your order
-- **Build Your Basket**: Add your favorite drinks and prepare your order
-- **Beautiful UI**: Enjoy a sleek, modern interface built with Jetpack Compose
+- Browse coffee menu with different categories
+- View detailed information for each drink
+- Add items to shopping basket
+- See ratings for each drink
+- Onboarding screen for first-time users
 
-## 🛠️ Built With Love Using
+## Tech Stack
 
-- **Kotlin** - My favorite language for Android development
-- **Jetpack Compose** - For a modern, declarative UI that's smooth as silk
-- **Material Design 3** - Clean, beautiful design that feels just right
-- **Navigation Component** - Smooth transitions between screens
+- Kotlin
+- Jetpack Compose
+- Material Design 3
+- Navigation Component
 
-## 🎨 Features
+## Getting Started
 
-Here's what I've included in the app:
-
-- Onboarding screen to welcome new users
-- Home screen with coffee menu and categories
-- Item detail screen for each drink
-- Shopping basket functionality
-- Rating system for each drink
-- Beautiful coffee imagery to make you thirsty!
-
-## 🚀 Getting Started
-
-Want to try out my app? Here's how:
+To run this project:
 
 1. Clone this repository
 2. Open the project in Android Studio
 3. Let Gradle sync and download dependencies
 4. Run the app on your emulator or physical device (API 24+)
-5. Enjoy browsing coffee!
 
-## 📋 Requirements
+## Requirements
 
-- Android Studio (latest version recommended)
+- Android Studio (latest version)
 - Android SDK (API 24 or higher)
 - Kotlin support
 
-## 🤝 Want to Contribute?
+## Contributing
 
-I'd love to see your contributions! Feel free to fork this project and make it even better. Whether it's fixing bugs, adding features, or improving the design, I'm excited to see what you come up with.
+Contributions are welcome. Feel free to open issues or submit pull requests.
 
-## 📝 License
+## License
 
-This project is available under the included license - check out the LICENSE file for details.
-
----
-
-Made with ☕ and 💙 for coffee lovers everywhere!
+See the LICENSE file for details.
