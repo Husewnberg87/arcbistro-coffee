@@ -44,7 +44,7 @@ val AppTypography = Typography(
     labelMedium = TextStyle(
         fontFamily = sora,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
+        fontSize = 18.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp
 

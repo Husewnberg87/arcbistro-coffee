@@ -416,7 +416,8 @@ fun CoffeeCard(item: MenuItem, onClick: () -> Unit) {
                     text = item.name,
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -435,7 +436,8 @@ fun CoffeeCard(item: MenuItem, onClick: () -> Unit) {
                         text = "$ ${String.format("%.2f", item.price)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
                     Button(
                         onClick = { /* TODO: Add to cart */ },

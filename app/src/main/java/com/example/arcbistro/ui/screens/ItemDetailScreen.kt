@@ -4,14 +4,18 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,8 +33,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,10 +47,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -55,6 +63,59 @@ import com.example.arcbistro.ui.theme.ArcBistroTheme
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.LightGray04
 
+
+@Composable
+fun SimpleTopBar(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.background,
+    tonalElevation: Dp = 0.dp,
+    centerTitle: Boolean = false,
+    navigationIcon: (@Composable () -> Unit)? = null,
+    title: @Composable () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {}
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding( top = 16.dp),
+        color = containerColor,
+        tonalElevation = tonalElevation,
+        contentColor = contentColorFor(containerColor),
+        shape = RoundedCornerShape(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            if (navigationIcon != null) {
+                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    navigationIcon()
+                }
+            }
+
+            Box(
+                modifier = Modifier
+//                    .weight(1f)
+                    .padding(horizontal = if (navigationIcon != null) 4.dp else 0.dp),
+                contentAlignment = if (centerTitle) Alignment.Center else Alignment.CenterStart
+            ) {
+                title()
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+                content = actions
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemDetailScreen(itemId: Int, navController: NavController) {
@@ -62,31 +123,35 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Detail") },
+            SimpleTopBar(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(painterResource(id = R.drawable.arrow_left), contentDescription = "Back",tint = Color.Unspecified)
                     }
                 },
+                title = {
+                    Text("Detail", style = MaterialTheme.typography.labelMedium.copy(fontSize = 18.sp,fontWeight = FontWeight.SemiBold), color = Color.Black)
+                },
                 actions = {
-                    IconButton(onClick = { /* TODO: Add to favorites */ }) {
-                        Icon(Icons.Default.FavoriteBorder, contentDescription = "Favorite")
+                    IconButton(onClick = { /* TODO */ }) {
+                        Icon(painterResource(id = R.drawable.heart), contentDescription = "Favorite",tint = Color.Unspecified)
                     }
                 }
             )
         },
         bottomBar = {
-            BottomAppBar(containerColor = Color(0xFFF9F9F9)) {
+            BottomAppBar(containerColor = MaterialTheme.colorScheme.background ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text(text = "Price", color = LightGray04)
                         Text(
                             text = "$ ${String.format("%.2f", item.price)}",
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 18.sp,color = Brown01),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -97,7 +162,7 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                         colors = ButtonDefaults.buttonColors(containerColor = Brown01),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text(text = "Buy Now", modifier = Modifier.padding(vertical = 8.dp))
+                        Text(text = "Buy Now", fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
                     }
                 }
             }
@@ -107,7 +172,9 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp)
+
         ) {
             Image(
                 painter = painterResource(id = item.imageRes),
@@ -118,43 +185,46 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     .clip(RoundedCornerShape(16.dp)),
                 contentScale = ContentScale.Crop
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Ice/Hot",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = LightGray04
-                    )
-                }
-                Row {
+                Text(
+                    text = "Ice/Hot",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = LightGray04
+                )
+
+                Row(){
                     IngredientIcon(R.drawable.bike)
                     IngredientIcon(R.drawable.coffee_beans)
                     IngredientIcon(R.drawable.milk)
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+//            Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.Star,
+                    painter = painterResource(id = R.drawable.star),
                     contentDescription = "Rating",
-                    tint = Color(0xFFFFC107)
+                    tint = Color(0xFFFFAA00),
+
                 )
                 Text(
                     text = " ${item.rating}",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
                 Text(
                     text = " (230)",
@@ -163,24 +233,45 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Description",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp
+            Spacer(modifier = Modifier
+                .padding(vertical = 18.dp, horizontal = 8.dp)
+                .height(1.dp)
+                .background(Color.LightGray)
+                .fillMaxWidth()
             )
             Text(
-                text = "A cappuccino is an approximately 150 ml (5 oz) beverage, with 25 ml of espresso coffee and 85ml of fresh milk... Read More",
+                text = "Description",
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 16.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black
+            )
+
+            Spacer(
+                modifier = Modifier
+                    .height(10.dp)
+            )
+
+            Text(
+                text = "A cappuccino is an approximately 150 ml (5 oz) beverage, with 25 ml of espresso coffee and 85ml of fresh milk",
                 style = MaterialTheme.typography.bodyMedium,
                 color = LightGray04
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = ".. Read More",
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = Brown01
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "Size",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = 16.sp),
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 20.sp
+                color = Color.Black
+            )
+            Spacer(
+                modifier = Modifier
+                    .height(12.dp)
             )
             SizeSelector()
         }
@@ -193,8 +284,8 @@ fun SizeSelector() {
     val sizes = listOf("S", "M", "L")
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         sizes.forEach { size ->
             val isSelected = selectedSize == size
@@ -208,7 +299,7 @@ fun SizeSelector() {
                 BorderStroke(1.dp, Brush.horizontalGradient(listOf(Brown01,Color.Red)))
             } else {
                 // use null or a light transparent stroke depending on desired look
-                null
+                BorderStroke(1.dp, LightGray04)
             }
 
             OutlinedButton(
@@ -218,7 +309,7 @@ fun SizeSelector() {
                 colors = colors,
                 border = border
             ) {
-                Text(text = size, modifier = Modifier.padding(vertical = 8.dp))
+                Text(text = size)
             }
         }
     }
@@ -227,7 +318,7 @@ fun SizeSelector() {
 @Composable
 fun IngredientIcon(iconRes: Int) {
     Card(
-        modifier = Modifier.padding(4.dp),
+        modifier = Modifier.padding(vertical = 2.dp, horizontal = 6.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F2ED))
     ) {
