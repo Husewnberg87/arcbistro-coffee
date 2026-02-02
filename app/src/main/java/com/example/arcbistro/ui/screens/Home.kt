@@ -1,5 +1,9 @@
 package com.example.arcbistro.ui.screens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,12 +18,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -39,20 +45,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -68,19 +81,41 @@ import com.example.arcbistro.ui.theme.NormalGray
 import com.example.arcbistro.ui.theme.White06
 import com.example.arcbistro.ui.theme.homeGradient1
 import com.example.arcbistro.ui.theme.homeGradient2
+import kotlinx.coroutines.launch
+import java.util.Locale
+import kotlin.math.roundToInt
+
+// ============================================================================
+// FLY-TO-CART ANIMATION STATE
+// ============================================================================
+
+/**
+ * Animation state holder for fly-to-cart animation.
+ * Immutable data class to prevent unnecessary recompositions.
+ */
+data class FlyToCartAnimationState(
+    val startPosition: Offset,
+    val endPosition: Offset,
+    val isAnimating: Boolean = false
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+    // Animation state - only one animation at a time (performance optimization)
+    var animationState by remember { mutableStateOf<FlyToCartAnimationState?>(null) }
+    var cartIconPosition by remember { mutableStateOf(Offset.Zero) }
+
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController) }
+        bottomBar = { BottomNavigationBar(navController = navController, onCartPositioned = { cartIconPosition = it }) }
     ) { innerPadding ->
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.TopCenter
+            ) {
             val screenWidthPx = this.constraints.maxWidth.toFloat()
             val screenHeightPx = this.constraints.maxHeight.toFloat()
 
@@ -301,7 +336,18 @@ fun HomeScreen(navController: NavController) {
                         ) {
                             for (item in rowItems) {
                                 Box(modifier = Modifier.weight(1f)) {
-                                    CoffeeCard(item = item, onClick = { navController.navigate("detail/${item.id}") })
+                                    CoffeeCard(
+                                        item = item,
+                                        onClick = { navController.navigate("detail/${item.id}") },
+                                        onAddToCart = { startPosition ->
+                                            // Trigger fly-to-cart animation
+                                            animationState = FlyToCartAnimationState(
+                                                startPosition = startPosition,
+                                                endPosition = cartIconPosition,
+                                                isAnimating = true
+                                            )
+                                        }
+                                    )
                                 }
                             }
                             if (rowItems.size == 1) {
@@ -311,12 +357,21 @@ fun HomeScreen(navController: NavController) {
                     }
                 }
             }
+            }
+        }
+
+        // Fly-to-cart animation overlay (outside LazyColumn for performance)
+        animationState?.let { state ->
+            FlyToCartOverlay(
+                animationState = state,
+                onAnimationComplete = { animationState = null }
+            )
         }
     }
 }
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(navController: NavController, onCartPositioned: (Offset) -> Unit = {}) {
     var selectedItem by remember { mutableStateOf(0) }
     val items = listOf("Home", "Favorites", "Cart", "Notifications")
     val routes = listOf("home", "favorites", "basket", "notifications")
@@ -332,7 +387,17 @@ fun BottomNavigationBar(navController: NavController) {
     ) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
-                icon = { Icon(painterResource(id = icons[index]), contentDescription = item) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = icons[index]),
+                        contentDescription = item,
+                        modifier = if (index == 2) { // Cart icon
+                            Modifier.onGloballyPositioned { coordinates ->
+                                onCartPositioned(coordinates.positionInRoot())
+                            }
+                        } else Modifier
+                    )
+                },
                 selected = selectedItem == index,
                 onClick = { 
                     selectedItem = index
@@ -370,7 +435,9 @@ fun CategoryChip(name: String, isSelected: Boolean, onSelect: () -> Unit) {
 }
 
 @Composable
-fun CoffeeCard(item: MenuItem, onClick: () -> Unit) {
+fun CoffeeCard(item: MenuItem, onClick: () -> Unit, onAddToCart: (Offset) -> Unit = {}) {
+    var addButtonPosition by remember { mutableStateOf(Offset.Zero) }
+
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -433,16 +500,20 @@ fun CoffeeCard(item: MenuItem, onClick: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "$ ${String.format("%.2f", item.price)}",
+                        text = "$ ${String.format(Locale.US, "%.2f", item.price)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
                     Button(
-                        onClick = { /* TODO: Add to cart */ },
+                        onClick = { onAddToCart(addButtonPosition) },
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier
+                            .size(36.dp)
+                            .onGloballyPositioned { coordinates ->
+                                addButtonPosition = coordinates.positionInRoot()
+                            },
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Brown01)
                     ) {
@@ -458,8 +529,88 @@ fun CoffeeCard(item: MenuItem, onClick: () -> Unit) {
     }
 }
 
+
 @Composable
+fun FlyToCartOverlay(
+    animationState: FlyToCartAnimationState,
+    onAnimationComplete: () -> Unit
+) {
+    // Animatable for smooth position interpolation
+    val animatedOffset = remember { Animatable(animationState.startPosition, Offset.VectorConverter) }
+    val animatedScale = remember { Animatable(1f) }
+    val animatedAlpha = remember { Animatable(1f) }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    // Trigger animation on state change
+    LaunchedEffect(animationState) {
+        if (animationState.isAnimating) {
+            coroutineScope.launch {
+                // Launch all animations in parallel for smooth effect
+                launch {
+                    animatedOffset.animateTo(
+                        targetValue = animationState.endPosition,
+                        animationSpec = tween(
+                            durationMillis = 500,
+                            easing = FastOutSlowInEasing
+                        )
+                    )
+                }
+                launch {
+                    animatedScale.animateTo(
+                        targetValue = 0.3f,
+                        animationSpec = tween(
+                            durationMillis = 500,
+                            easing = FastOutSlowInEasing
+                        )
+                    )
+                }
+                launch {
+                    animatedAlpha.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(
+                            durationMillis = 500,
+                            delayMillis = 200, // Start fade near the end
+                            easing = FastOutSlowInEasing
+                        )
+                    )
+                }
+            }.invokeOnCompletion {
+                // Reset and notify completion (dispose animation state)
+                onAnimationComplete()
+            }
+        }
+    }
+
+    // Render the flying circle
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .offset {
+                IntOffset(
+                    animatedOffset.value.x.roundToInt(),
+                    animatedOffset.value.y.roundToInt()
+                )
+            }
+    ) {
+        // Simple circular shape (layout-based, not Canvas)
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .scale(animatedScale.value)
+                .alpha(animatedAlpha.value)
+                .background(
+                    color = Brown01.copy(alpha = 0.8f),
+                    shape = CircleShape
+                )
+        )
+    }
+}
+
+
+
 @Preview(showBackground = true, showSystemUi = true)
+@Composable
 fun HomeScreenPreview() {
     ArcBistroTheme {
         HomeScreen(navController = rememberNavController())
