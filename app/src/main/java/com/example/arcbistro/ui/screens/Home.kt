@@ -235,7 +235,7 @@ fun HomeScreen(navController: NavController) {
                                 style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier
                                     .background(
-                                        color = DarkGray03,
+                                        color = DarkGray03,// or Black
                                         shape = RoundedCornerShape(12.dp)
                                     )
                                     .padding(horizontal = 8.dp)
