@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,10 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,12 +26,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +53,7 @@ import com.example.arcbistro.data.menuItems
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.LightGray04
+import java.util.Locale
 
 
 @Composable
@@ -81,7 +73,7 @@ fun SimpleTopBar(
             .padding( top = 16.dp),
         color = containerColor,
         tonalElevation = tonalElevation,
-        contentColor = contentColorFor(containerColor),
+        contentColor = MaterialTheme.colorScheme.onBackground,
         shape = RoundedCornerShape(0.dp)
     ) {
         Row(
@@ -100,7 +92,6 @@ fun SimpleTopBar(
 
             Box(
                 modifier = Modifier
-//                    .weight(1f)
                     .padding(horizontal = if (navigationIcon != null) 4.dp else 0.dp),
                 contentAlignment = if (centerTitle) Alignment.Center else Alignment.CenterStart
             ) {
@@ -120,6 +111,7 @@ fun SimpleTopBar(
 @Composable
 fun ItemDetailScreen(itemId: Int, navController: NavController) {
     val item = menuItems.find { it.id == itemId } ?: return
+    var quantity by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -140,7 +132,7 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
             )
         },
         bottomBar = {
-            BottomAppBar(containerColor = MaterialTheme.colorScheme.background ) {
+            BottomAppBar(containerColor = MaterialTheme.colorScheme.background, modifier = Modifier.padding(vertical = 8.dp) ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -148,21 +140,33 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(text = "Price", color = LightGray04)
+                        Text(text = "Price", color = LightGray04,style = MaterialTheme.typography.labelMedium)
+                        Spacer(modifier=Modifier.height(4.dp))
+                        // Calculate total price based on quantity (default to unit price when quantity == 0)
+                        val totalPrice = item.price * (if (quantity > 0) quantity else 1)
                         Text(
-                            text = "$ ${String.format("%.2f", item.price)}",
-                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 18.sp,color = Brown01),
+                            text = "$ ${String.format(Locale.US, "%.2f", totalPrice)}",
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 20.sp,color = Brown01),
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Spacer(modifier = Modifier.weight(1f))
-                    Button(
-                        onClick = { /* TODO */ },
-                        modifier = Modifier.fillMaxWidth(0.7f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Brown01),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text(text = "Buy Now", fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
+
+                    if (quantity == 0) {
+                        Button(
+                            onClick = { quantity = 1 },
+                            modifier = Modifier.fillMaxWidth(0.7f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Brown01),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(text = "Buy Now", fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
+                        }
+                    } else {
+                        QuantitySelector(
+                            quantity = quantity,
+                            onIncrease = { quantity++ },
+                            onDecrease = { if (quantity > 0) quantity-- }
+                        )
                     }
                 }
             }
@@ -211,7 +215,6 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     IngredientIcon(R.drawable.milk)
                 }
             }
-//            Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -279,6 +282,41 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
 }
 
 @Composable
+fun QuantitySelector(quantity: Int, onIncrease: () -> Unit, onDecrease: () -> Unit) {
+
+
+    // Replaced the previous Row-with-background with a Card + inner Row
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(0.7f),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Brown01)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxWidth()
+        ) {
+            IconButton(onClick = onDecrease) {
+                // use a simple text label instead of material icons to avoid unresolved symbol
+                Text(text = "-", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                text = quantity.toString(),
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(onClick = onIncrease) {
+                Text(text = "+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
 fun SizeSelector() {
     var selectedSize by remember { mutableStateOf("M") }
     val sizes = listOf("S", "M", "L")
@@ -298,7 +336,6 @@ fun SizeSelector() {
             val border = if (isSelected) {
                 BorderStroke(1.dp, Brush.horizontalGradient(listOf(Brown01,Color.Red)))
             } else {
-                // use null or a light transparent stroke depending on desired look
                 BorderStroke(1.dp, LightGray04)
             }
 
