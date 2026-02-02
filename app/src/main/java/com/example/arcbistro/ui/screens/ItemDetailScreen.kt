@@ -1,5 +1,7 @@
 package com.example.arcbistro.ui.screens
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -152,21 +155,28 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     }
                     Spacer(modifier = Modifier.weight(1f))
 
-                    if (quantity == 0) {
-                        Button(
-                            onClick = { quantity = 1 },
-                            modifier = Modifier.fillMaxWidth(0.7f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Brown01),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(text = "Buy Now", fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
+                    // Parent box sets the shared fixed width for both states, and animates size.
+                    Box(modifier = Modifier.fillMaxWidth(0.7f).animateContentSize()) {
+                        Crossfade(targetState = (quantity == 0)) { isZero ->
+                            if (isZero) {
+                                // Fill the available parent box so button and card have identical size
+                                Button(
+                                    onClick = { quantity = 1 },
+                                    modifier = Modifier.fillMaxSize(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Brown01),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Text(text = "Buy Now", fontSize = 18.sp, modifier = Modifier.padding(vertical = 8.dp))
+                                }
+                            } else {
+                                QuantitySelector(
+                                    quantity = quantity,
+                                    onIncrease = { if (quantity < 999) quantity++ },
+                                    onDecrease = { if (quantity > 0) quantity-- },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
-                    } else {
-                        QuantitySelector(
-                            quantity = quantity,
-                            onIncrease = { quantity++ },
-                            onDecrease = { if (quantity > 0) quantity-- }
-                        )
                     }
                 }
             }
@@ -282,35 +292,40 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
 }
 
 @Composable
-fun QuantitySelector(quantity: Int, onIncrease: () -> Unit, onDecrease: () -> Unit) {
+fun QuantitySelector(quantity: Int, onIncrease: () -> Unit, onDecrease: () -> Unit, modifier: Modifier = Modifier) {
+    // Display the number (we cap increments at 999 in the caller)
+    val displayText = quantity.toString()
 
-
-    // Replaced the previous Row-with-background with a Card + inner Row
     Card(
-        modifier = Modifier
-            .fillMaxWidth(0.7f),
+        modifier = modifier
+            .animateContentSize(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Brown01)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp)
+                .fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onDecrease) {
-                // use a simple text label instead of material icons to avoid unresolved symbol
+            IconButton(onClick = onDecrease, enabled = quantity > 0) {
                 Text(text = "-", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
+
             Text(
-                text = quantity.toString(),
+                text = displayText,
                 color = Color.White,
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
-            IconButton(onClick = onIncrease) {
-                Text(text = "+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+
+            // Hide the plus button when we've reached the maximum (999)
+            if (quantity < 999) {
+                IconButton(onClick = onIncrease) {
+                    Text(text = "+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }
