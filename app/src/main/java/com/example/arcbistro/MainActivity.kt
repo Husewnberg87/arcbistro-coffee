@@ -11,9 +11,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.arcbistro.ui.screens.BasketScreen
+import com.example.arcbistro.ui.screens.DeliveryAddressScreen
+import com.example.arcbistro.ui.screens.DeliveryTrackingScreen
 import com.example.arcbistro.ui.screens.HomeScreen
 import com.example.arcbistro.ui.screens.ItemDetailScreen
 import com.example.arcbistro.ui.screens.OnboardingScreen
+import com.example.arcbistro.ui.screens.OrderResultScreen
+import com.example.arcbistro.ui.screens.OrderScreen
+import com.example.arcbistro.ui.screens.PaymentMethodScreen
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 
 class MainActivity : ComponentActivity() {
@@ -58,6 +63,49 @@ fun AppNavigation() {
             if (itemId != null) {
                 ItemDetailScreen(itemId = itemId, navController = navController)
             }
+        }
+
+        // ============ Order Flow Screens ============
+        composable("order") {
+            OrderScreen(
+                onBackClick = { navController.popBackStack() },
+                onAddressClick = { navController.navigate("delivery-address") },
+                onPaymentMethodClick = { navController.navigate("payment-method") },
+                onOrderClick = { navController.navigate("order-result") }
+            )
+        }
+
+        composable("delivery-address") {
+            DeliveryAddressScreen(
+                onBackClick = { navController.popBackStack() },
+                onAddNewAddress = { /* TODO: Navigate to add address screen */ },
+                onAddressSelected = { navController.popBackStack() }
+            )
+        }
+
+        composable("payment-method") {
+            PaymentMethodScreen(
+                onBackClick = { navController.popBackStack() },
+                onConfirm = { navController.popBackStack() }
+            )
+        }
+
+        composable("order-result") {
+            OrderResultScreen(
+                onTrackOrder = { navController.navigate("delivery-tracking") },
+                onBackToHome = {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable("delivery-tracking") {
+            DeliveryTrackingScreen(
+                onBackClick = { navController.popBackStack() },
+                onCallCourier = { /* TODO: Trigger phone call intent */ }
+            )
         }
     }
 }
