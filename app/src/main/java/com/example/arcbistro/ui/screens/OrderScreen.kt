@@ -16,9 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.CreditCard
-import androidx.compose.material.icons.outlined.LocalOffer
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,6 +32,7 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -46,26 +45,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.arcbistro.R
 import com.example.arcbistro.ui.components.OrderItemCard
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.DarkGray03
 import com.example.arcbistro.ui.theme.LightGray04
+import com.example.arcbistro.ui.viewmodels.CartViewModel
+import com.example.arcbistro.ui.viewmodels.CartViewModelFactory
+import java.util.Locale
 
 /**
  * Order Screen - Checkout UI
  * Purpose: Review order before placing it
+ * Refactored to observe real data from CartViewModel
  */
 @Composable
 fun OrderScreen(
     onBackClick: () -> Unit = {},
     onAddressClick: () -> Unit = {},
     onPaymentMethodClick: () -> Unit = {},
-    onOrderClick: () -> Unit = {}
+    onOrderClick: () -> Unit = {},
+    cartViewModel: CartViewModel = viewModel(factory = CartViewModelFactory)
 ) {
     // UI-only state for tab selection
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    // Observe real data from Room via ViewModel
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val subtotal by cartViewModel.totalAmount.collectAsState()
 
     Scaffold(
         topBar = {
@@ -100,6 +109,7 @@ fun OrderScreen(
             ) {
                 Button(
                     onClick = onOrderClick,
+                    enabled = cartItems.isNotEmpty(), // Disable if nothing to order
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
@@ -151,38 +161,29 @@ fun OrderScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Order Item Cards - Static placeholder data
+            // Order Item Cards - Dynamic data from Room
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OrderItemCard(
-                    imageRes = R.drawable.coffee_1,
-                    title = "Cappuccino",
-                    subtitle = "with Oat Milk",
-                    price = "$4.50",
-                    initialQuantity = 1
-                )
-                OrderItemCard(
-                    imageRes = R.drawable.coffee_2,
-                    title = "Americano",
-                    subtitle = "Double Shot",
-                    price = "$3.50",
-                    initialQuantity = 2
-                )
+                cartItems.forEach { item ->
+                    OrderItemCard(
+                        imageUrl = item.imageUrl,
+                        title = item.name,
+                        subtitle = "Size: ${item.size}",
+                        price = item.price,
+                        quantity = item.quantity,
+                        onIncrease = { cartViewModel.updateCartItemQuantity(item, item.quantity + 1) },
+                        onDecrease = { cartViewModel.updateCartItemQuantity(item, item.quantity - 1) }
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // ============ Discount Row ============
-            DiscountRow(
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // ============ Payment Summary ============
             PaymentSummary(
+                subtotal = subtotal,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
@@ -325,65 +326,16 @@ private fun SectionTitle(
 }
 
 /**
- * Discount Row - Label + discount code + edit icon
- */
-@Composable
-private fun DiscountRow(
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Brown01.copy(alpha = 0.08f),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Discount Icon
-            Icon(
-                imageVector = Icons.Outlined.LocalOffer,
-                contentDescription = "Discount",
-                tint = Brown01,
-                modifier = Modifier.size(24.dp)
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Discount Code
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "1 Discount is applied",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    ),
-                    color = DarkGray03
-                )
-            }
-
-            // Edit Icon
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit discount",
-                tint = Brown01,
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
-
-/**
- * Payment Summary - Subtotal, Delivery Fee, Discount, Total
+ * Payment Summary - Subtotal, Delivery Fee, Total (Discount removed)
  */
 @Composable
 private fun PaymentSummary(
+    subtotal: Double,
     modifier: Modifier = Modifier
 ) {
+    val deliveryFee = if (subtotal > 0) 2.0 else 0.0
+    val total = subtotal + deliveryFee
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -406,13 +358,10 @@ private fun PaymentSummary(
             )
 
             // Subtotal
-            PaymentRow(label = "Subtotal", value = "$11.50")
+            PaymentRow(label = "Subtotal", value = "$ ${String.format(Locale.US, "%.2f", subtotal)}")
 
             // Delivery Fee
-            PaymentRow(label = "Delivery Fee", value = "$2.00")
-
-            // Discount
-            PaymentRow(label = "Discount", value = "-$1.50", valueColor = Brown01)
+            PaymentRow(label = "Delivery Fee", value = "$ ${String.format(Locale.US, "%.2f", deliveryFee)}")
 
             HorizontalDivider(
                 color = LightGray04.copy(alpha = 0.3f),
@@ -434,7 +383,7 @@ private fun PaymentSummary(
                     color = DarkGray03
                 )
                 Text(
-                    text = "$12.00",
+                    text = "$ ${String.format(Locale.US, "%.2f", total)}",
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp

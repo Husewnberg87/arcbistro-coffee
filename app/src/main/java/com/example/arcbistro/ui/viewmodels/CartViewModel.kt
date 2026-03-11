@@ -33,9 +33,28 @@ class CartViewModel(private val repository: CartRepository) : ViewModel() {
             initialValue = 0.0
         )
 
+    /**
+     * Used by Detail Screen to add a new product or update quantity by matching itemId + size.
+     */
     fun updateQuantity(item: MenuItem, size: String, quantity: Int) {
         viewModelScope.launch {
             repository.addToCart(item, size, quantity)
+        }
+    }
+
+    /**
+     * CLEANER WAY: Used by Basket Screen to update an item that ALREADY exists in the database.
+     * No need to create a "fake" MenuItem.
+     */
+    fun updateCartItemQuantity(cartItem: Cart, newQuantity: Int) {
+        viewModelScope.launch {
+            if (newQuantity > 0) {
+                // Just update the quantity field of the existing object
+                repository.updateCartItem(cartItem.copy(quantity = newQuantity))
+            } else {
+                // If it hits 0, remove it from the DB
+                repository.removeFromCart(cartItem)
+            }
         }
     }
 }

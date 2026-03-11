@@ -23,6 +23,8 @@ import com.example.arcbistro.ui.screens.OrderScreen
 import com.example.arcbistro.ui.screens.PaymentMethodScreen
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.arcbistro.ui.viewmodels.CartViewModel
+import com.example.arcbistro.ui.viewmodels.CartViewModelFactory
 import com.example.arcbistro.ui.viewmodels.HomeViewModel
 import com.example.arcbistro.ui.viewmodels.HomeViewModelFactory
 
@@ -88,11 +90,13 @@ fun AppNavigation(startDestination: String) {
 
         // ============ Order Flow Screens ============
         composable("order") {
+            val cartVm: CartViewModel = viewModel(factory = CartViewModelFactory)
             OrderScreen(
                 onBackClick = { navController.popBackStack() },
                 onAddressClick = { navController.navigate("delivery-address") },
                 onPaymentMethodClick = { navController.navigate("payment-method") },
-                onOrderClick = { navController.navigate("order-result") }
+                onOrderClick = { navController.navigate("order-result") },
+                cartViewModel = cartVm
             )
         }
 

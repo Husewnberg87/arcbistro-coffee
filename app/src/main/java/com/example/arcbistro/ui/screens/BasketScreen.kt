@@ -1,66 +1,111 @@
 package com.example.arcbistro.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.arcbistro.ui.theme.ArcBistroTheme
+import com.example.arcbistro.ui.components.OrderItemCard
 import com.example.arcbistro.ui.theme.Brown01
+import com.example.arcbistro.ui.theme.DarkGray03
+import com.example.arcbistro.ui.viewmodels.CartViewModel
+import com.example.arcbistro.ui.viewmodels.CartViewModelFactory
+import java.util.Locale
 
 @Composable
-fun BasketScreen(navController: NavController) {
-    Scaffold {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text("Basket Screen - Coming Soon!")
+fun BasketScreen(
+    navController: NavController,
+    cartViewModel: CartViewModel = viewModel(factory = CartViewModelFactory)
+) {
+    // 1. Observe the live state from the database
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val totalAmount by cartViewModel.totalAmount.collectAsState()
 
-                // Checkout button to navigate to Order flow
-                Button(
-                    onClick = { navController.navigate("order") },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Brown01,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(16.dp)
+    Scaffold(
+        topBar = {
+            // Simple custom top bar
+            Surface(shadowElevation = 2.dp) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("Proceed to Checkout")
+                    Text("My Basket", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            }
+        },
+        bottomBar = {
+            // 2. Sticky Checkout Section
+            Surface(tonalElevation = 8.dp, shadowElevation = 16.dp) {
+                Column(modifier = Modifier.padding(24.dp).fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Total Price", color = DarkGray03, fontSize = 16.sp)
+                        Text(
+                            text = "$ ${String.format(Locale.US, "%.2f", totalAmount)}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = Brown01
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { navController.navigate("order") },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Brown01)
+                    ) {
+                        Text("Go to Checkout", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BasketScreenPreview() {
-    ArcBistroTheme {
-        BasketScreen(navController = rememberNavController())
+    ) { innerPadding ->
+        // 3. Main Content
+        if (cartItems.isEmpty()) {
+            // Empty state UI
+            Box(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Your basket is empty", color = Color.Gray)
+            }
+        } else {
+            // 4. Reactive List of Items
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(cartItems) { item ->
+                    OrderItemCard(
+                        imageUrl = item.imageUrl,
+                        title = item.name,
+                        subtitle = "Size: ${item.size}",
+                        price = item.price,
+                        quantity = item.quantity,
+                        onIncrease = {
+                            cartViewModel.updateCartItemQuantity(item, item.quantity + 1)
+                        },
+                        onDecrease = {
+                            cartViewModel.updateCartItemQuantity(item, item.quantity - 1)
+                        }
+                    )
+                }
+            }
+        }
     }
 }

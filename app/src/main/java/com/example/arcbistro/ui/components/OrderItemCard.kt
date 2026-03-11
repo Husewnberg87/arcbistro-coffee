@@ -1,69 +1,48 @@
 package com.example.arcbistro.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.arcbistro.R
-import com.example.arcbistro.ui.theme.ArcBistroTheme
+import coil.compose.AsyncImage
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.DarkGray03
 import com.example.arcbistro.ui.theme.LightGray04
+import java.util.Locale
 
 /**
- * Order Item Card Component
- * Displays product image, title, subtitle, and quantity selector
- * Used in OrderScreen for checkout flow
+ * Refactored Order Item Card Component
+ * Now stateless and supports remote images via Coil
  */
 @Composable
 fun OrderItemCard(
     modifier: Modifier = Modifier,
-    imageRes: Int,
+    imageUrl: String,
     title: String,
     subtitle: String,
-    price: String,
-    initialQuantity: Int = 1
+    price: Double,
+    quantity: Int,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
 ) {
-    // UI-only state for quantity display
-    var quantity by remember { mutableIntStateOf(initialQuantity) }
-
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -72,21 +51,15 @@ fun OrderItemCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product Image
-            Box(
+            // Product Image (Firebase URL)
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
                 modifier = Modifier
                     .size(64.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = imageRes),
-                    contentDescription = title,
-                    modifier = Modifier.size(56.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -99,101 +72,59 @@ fun OrderItemCard(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
+                        fontSize = 16.sp
                     ),
                     color = DarkGray03
                 )
                 Text(
-                    text = subtitle,
+                    text = subtitle, // This will show the size (S, M, L)
                     style = MaterialTheme.typography.bodySmall,
                     color = LightGray04
                 )
                 Text(
-                    text = price,
+                    text = "$ ${String.format(Locale.US, "%.2f", price)}",
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
                     ),
                     color = Brown01
                 )
             }
 
-            // Quantity Selector
-            QuantitySelector(
-                quantity = quantity,
-                onQuantityChange = { quantity = it }
-            )
+            // Quantity Selector (Controlled by BasketScreen)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = onDecrease,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = "Decrease",
+                        tint = Brown01
+                    )
+                }
+
+                Text(
+                    text = quantity.toString(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = DarkGray03
+                )
+
+                IconButton(
+                    onClick = onIncrease,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Increase",
+                        tint = Brown01
+                    )
+                }
+            }
         }
-    }
-}
-
-/**
- * Quantity Selector Component
- * Minus / Quantity / Plus controls
- */
-@Composable
-private fun QuantitySelector(
-    quantity: Int,
-    onQuantityChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 4.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        // Minus Button
-        IconButton(
-            onClick = { if (quantity > 1) onQuantityChange(quantity - 1) },
-            modifier = Modifier.size(28.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Remove,
-                contentDescription = "Decrease quantity",
-                tint = if (quantity > 1) DarkGray03 else LightGray04,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-
-        // Quantity Display
-        Text(
-            text = quantity.toString(),
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            ),
-            color = DarkGray03,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-
-        // Plus Button
-        IconButton(
-            onClick = { onQuantityChange(quantity + 1) },
-            modifier = Modifier.size(28.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Increase quantity",
-                tint = DarkGray03,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun OrderItemCardPreview() {
-    ArcBistroTheme {
-        OrderItemCard(
-            imageRes = R.drawable.coffee_1,
-            title = "Cappuccino",
-            subtitle = "with Oat Milk",
-            price = "$4.50",
-            initialQuantity = 2
-        )
     }
 }
