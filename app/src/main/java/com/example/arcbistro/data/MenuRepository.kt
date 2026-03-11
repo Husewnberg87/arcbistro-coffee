@@ -13,10 +13,14 @@ class MenuRepository(
     // 2. Logic to sync the remote data with local cache
     suspend fun refreshMenu() {
         try {
+            println("ArcBistro: Fetching menu from web...")
             val remoteMenu = menuService.fetchMenu()
+            println("ArcBistro: Success! Received ${remoteMenu.size} items.")
+
             menuDao.insertAll(remoteMenu)
+            println("ArcBistro: Data saved to Room database.")
         } catch (e: Exception) {
-            // Log error or handle network failure
+            println("ArcBistro: Error fetching menu: ${e.message}")
             e.printStackTrace()
         }
     }

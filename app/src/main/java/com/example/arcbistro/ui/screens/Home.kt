@@ -46,6 +46,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,11 +69,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.arcbistro.R
 import com.example.arcbistro.data.MenuItem
-import com.example.arcbistro.data.menuItems
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.DarkGray03
@@ -81,6 +83,8 @@ import com.example.arcbistro.ui.theme.NormalGray
 import com.example.arcbistro.ui.theme.White06
 import com.example.arcbistro.ui.theme.homeGradient1
 import com.example.arcbistro.ui.theme.homeGradient2
+import com.example.arcbistro.ui.viewmodels.HomeViewModel
+import com.example.arcbistro.ui.viewmodels.HomeViewModelFactory
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -89,10 +93,6 @@ import kotlin.math.roundToInt
 // FLY-TO-CART ANIMATION STATE
 // ============================================================================
 
-/**
- * Animation state holder for fly-to-cart animation.
- * Immutable data class to prevent unnecessary recompositions.
- */
 data class FlyToCartAnimationState(
     val startPosition: Offset,
     val endPosition: Offset,
@@ -101,273 +101,287 @@ data class FlyToCartAnimationState(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
-    // Animation state - only one animation at a time (performance optimization)
-    var animationState by remember { mutableStateOf<FlyToCartAnimationState?>(null) }
-    var cartIconPosition by remember { mutableStateOf(Offset.Zero) }
+fun HomeScreen(
+    navController: NavController,
+    viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory)
+) {
+    // Observe dynamic menu list from ViewModel
+    val menuItems by viewModel.menuItems.collectAsState()
 
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController, onCartPositioned = { cartIconPosition = it }) }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.TopCenter
-            ) {
-            val screenWidthPx = this.constraints.maxWidth.toFloat()
-            val screenHeightPx = this.constraints.maxHeight.toFloat()
+    if (menuItems.isEmpty()){
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Loading menu... or list is empty", color = Color.Gray)
+        }
+    } else {
 
-            val diagonalGradient = Brush.linearGradient(
-                colors = listOf(homeGradient2, homeGradient1),
-                start = Offset(x = 0f, y = screenHeightPx * 0.7f),
-                end = Offset(x = screenWidthPx, y = 0f)
-            )
+        var animationState by remember { mutableStateOf<FlyToCartAnimationState?>(null) }
+        var cartIconPosition by remember { mutableStateOf(Offset.Zero) }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.35f)
-                    .background(brush = diagonalGradient)
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 60.dp,start = 30.dp, end = 30.dp)
-            ) {
-                Text(
-                    text = "Location",
-                    color = LightGray04,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 14.sp
-                    )
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Blitzen,Tanjungbalai",
-                        color = White06,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontSize = 16.sp
-                        )
-                    )
-                    Icon(
-                        painter = painterResource(id = R.drawable.arrow_down),
-                        contentDescription = "Open dropdown",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clickable { /* TO DO */ }
-                    )
-                }
-                Spacer(modifier = Modifier.height(25.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    var text by remember { mutableStateOf("") }
-                    TextField(
-                        value = text,
-                        onValueChange = { newText -> text = newText },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
-                        placeholder = {
-                            Text(
-                                "Search coffee",
-                                color = LightGray04,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontSize = 14.sp
-                                )
-                            )
-                        },
-                        leadingIcon = { Icon(painter = painterResource(R.drawable.search), contentDescription = "Search") },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = NormalGray,
-                            unfocusedContainerColor = NormalGray,
-                            disabledContainerColor = NormalGray,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                            unfocusedLeadingIconColor = White06
-                        )
-                    )
-
-                    Button(
-                        onClick = { /* TODO */ },
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.size(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Brown01
-                        ),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.filter),
-                            contentDescription = "Filter",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Box(
+        Scaffold(
+            bottomBar = { BottomNavigationBar(navController = navController, onCartPositioned = { cartIconPosition = it }) }
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                BoxWithConstraints(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .clip(shape = RoundedCornerShape(16.dp)),
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentAlignment = Alignment.TopCenter
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.promo),
-                        contentDescription = "Promo Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                    val screenWidthPx = this.constraints.maxWidth.toFloat()
+                    val screenHeightPx = this.constraints.maxHeight.toFloat()
+
+                    val diagonalGradient = Brush.linearGradient(
+                        colors = listOf(homeGradient2, homeGradient1),
+                        start = Offset(x = 0f, y = screenHeightPx * 0.7f),
+                        end = Offset(x = screenWidthPx, y = 0f)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.35f)
+                            .background(brush = diagonalGradient)
                     )
 
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 30.dp, vertical = 15.dp)
-                            .align(Alignment.CenterStart),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                            .padding(top = 60.dp,start = 30.dp, end = 30.dp)
                     ) {
-                        Card(
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFED5151)
-                            ),
+                        Text(
+                            text = "Location",
+                            color = LightGray04,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontSize = 14.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                "Promo",
+                                text = "Blitzen,Tanjungbalai",
                                 color = White06,
                                 style = MaterialTheme.typography.titleLarge.copy(
-                                    fontSize = 14.sp
-                                ),
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
+                                    fontSize = 16.sp
+                                )
                             )
-                        }
-                        Row {
-                            Text(
-                                "Buy one ",
-                                color = White06,
-                                style = MaterialTheme.typography.titleLarge
-                            )
-
-                            Text(
-                                "get",
-                                color = White06,
-                                style = MaterialTheme.typography.titleLarge,
+                            Icon(
+                                painter = painterResource(id = R.drawable.arrow_down),
+                                contentDescription = "Open dropdown",
+                                tint = Color.White,
                                 modifier = Modifier
-                                    .background(
-                                        color = DarkGray03,// or Black
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                    .padding(horizontal = 8.dp)
+                                    .size(16.dp)
+                                    .clickable { /* TO DO */ }
                             )
                         }
+                        Spacer(modifier = Modifier.height(25.dp))
 
                         Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "one ",
-                                color = White06,
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                text = "FREE",
-                                color = White06,
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier
-                                    .background(
-                                        color = DarkGray03,
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(horizontal = 8.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val coffeeCategories = listOf("All Coffee", "Machiato", "Latte", "Americano", "Cappuccino")
-                var selectedCategory by remember { mutableStateOf("All Coffee") }
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    items(coffeeCategories) { category ->
-                        CategoryChip(
-                            name = category,
-                            isSelected = category == selectedCategory,
-                            onSelect = { selectedCategory = category }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val filteredMenuItems = if (selectedCategory == "All Coffee") {
-                    menuItems
-                } else {
-                    menuItems.filter { it.category == selectedCategory }
-                }
-
-                val chunkedItems = filteredMenuItems.chunked(2)
-
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(chunkedItems) { rowItems ->
-                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            for (item in rowItems) {
-                                Box(modifier = Modifier.weight(1f)) {
-                                    CoffeeCard(
-                                        item = item,
-                                        onClick = { navController.navigate("detail/${item.id}") },
-                                        onAddToCart = { startPosition ->
-                                            // Trigger fly-to-cart animation
-                                            animationState = FlyToCartAnimationState(
-                                                startPosition = startPosition,
-                                                endPosition = cartIconPosition,
-                                                isAnimating = true
+                            var text by remember { mutableStateOf("") }
+                            TextField(
+                                value = text,
+                                onValueChange = { newText -> text = newText },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp),
+                                placeholder = {
+                                    Text(
+                                        "Search coffee",
+                                        color = LightGray04,
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            fontSize = 14.sp
+                                        )
+                                    )
+                                },
+                                leadingIcon = { Icon(painter = painterResource(R.drawable.search), contentDescription = "Search") },
+                                shape = RoundedCornerShape(16.dp),
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = NormalGray,
+                                    unfocusedContainerColor = NormalGray,
+                                    disabledContainerColor = NormalGray,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent,
+                                    unfocusedLeadingIconColor = White06
+                                )
+                            )
+
+                            Button(
+                                onClick = { /* TODO */ },
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.size(56.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Brown01
+                                ),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.filter),
+                                    contentDescription = "Filter",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(150.dp)
+                                .clip(shape = RoundedCornerShape(16.dp)),
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.promo),
+                                contentDescription = "Promo Image",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 30.dp, vertical = 15.dp)
+                                    .align(Alignment.CenterStart),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Card(
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFFED5151)
+                                    ),
+                                ) {
+                                    Text(
+                                        "Promo",
+                                        color = White06,
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontSize = 14.sp
+                                        ),
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
+                                    )
+                                }
+                                Row {
+                                    Text(
+                                        "Buy one ",
+                                        color = White06,
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+
+                                    Text(
+                                        "get",
+                                        color = White06,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        modifier = Modifier
+                                            .background(
+                                                color = DarkGray03,
+                                                shape = RoundedCornerShape(12.dp)
                                             )
-                                        }
+                                            .padding(horizontal = 8.dp)
+                                    )
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "one ",
+                                        color = White06,
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                    Text(
+                                        text = "FREE",
+                                        color = White06,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        modifier = Modifier
+                                            .background(
+                                                color = DarkGray03,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(horizontal = 8.dp)
                                     )
                                 }
                             }
-                            if (rowItems.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        val coffeeCategories = listOf("All Coffee", "Machiato", "Latte", "Americano", "Cappuccino")
+                        var selectedCategory by remember { mutableStateOf("All Coffee") }
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            items(coffeeCategories) { category ->
+                                CategoryChip(
+                                    name = category,
+                                    isSelected = category == selectedCategory,
+                                    onSelect = { selectedCategory = category }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Filtering logic uses the live menuItems list
+                        val filteredMenuItems = if (selectedCategory == "All Coffee") {
+                            menuItems
+                        } else {
+                            menuItems.filter { it.category == selectedCategory }
+                        }
+
+                        val chunkedItems = filteredMenuItems.chunked(2)
+
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(chunkedItems) { rowItems ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    for (item in rowItems) {
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            CoffeeCard(
+                                                item = item,
+                                                onClick = { navController.navigate("detail/${item.id}") },
+                                                onAddToCart = { startPosition ->
+                                                    animationState = FlyToCartAnimationState(
+                                                        startPosition = startPosition,
+                                                        endPosition = cartIconPosition,
+                                                        isAnimating = true
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                    if (rowItems.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+
+            animationState?.let { state ->
+                FlyToCartOverlay(
+                    animationState = state,
+                    onAnimationComplete = { animationState = null }
+                )
             }
         }
 
-        // Fly-to-cart animation overlay (outside LazyColumn for performance)
-        animationState?.let { state ->
-            FlyToCartOverlay(
-                animationState = state,
-                onAnimationComplete = { animationState = null }
-            )
-        }
     }
+
+
 }
 
 @Composable
@@ -449,11 +463,14 @@ fun CoffeeCard(item: MenuItem, onClick: () -> Unit, onAddToCart: (Offset) -> Uni
                     .fillMaxWidth()
                     .height(130.dp)
             ) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
+                // Now using AsyncImage for web URLs from Firebase
+                AsyncImage(
+                    model = item.imageUrl,
                     contentDescription = item.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+//                    placeholder = painterResource(R.drawable.coffee_placeholder), // Optional: add placeholder
+//                    error = painterResource(R.drawable.coffee_placeholder) // Optional: add error image
                 )
                 Row(
                     modifier = Modifier
@@ -535,18 +552,15 @@ fun FlyToCartOverlay(
     animationState: FlyToCartAnimationState,
     onAnimationComplete: () -> Unit
 ) {
-    // Animatable for smooth position interpolation
     val animatedOffset = remember { Animatable(animationState.startPosition, Offset.VectorConverter) }
     val animatedScale = remember { Animatable(1f) }
     val animatedAlpha = remember { Animatable(1f) }
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Trigger animation on state change
     LaunchedEffect(animationState) {
         if (animationState.isAnimating) {
             coroutineScope.launch {
-                // Launch all animations in parallel for smooth effect
                 launch {
                     animatedOffset.animateTo(
                         targetValue = animationState.endPosition,
@@ -570,19 +584,17 @@ fun FlyToCartOverlay(
                         targetValue = 0f,
                         animationSpec = tween(
                             durationMillis = 500,
-                            delayMillis = 200, // Start fade near the end
+                            delayMillis = 200, 
                             easing = FastOutSlowInEasing
                         )
                     )
                 }
             }.invokeOnCompletion {
-                // Reset and notify completion (dispose animation state)
                 onAnimationComplete()
             }
         }
     }
 
-    // Render the flying circle
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -593,7 +605,6 @@ fun FlyToCartOverlay(
                 )
             }
     ) {
-        // Simple circular shape (layout-based, not Canvas)
         Box(
             modifier = Modifier
                 .size(32.dp)

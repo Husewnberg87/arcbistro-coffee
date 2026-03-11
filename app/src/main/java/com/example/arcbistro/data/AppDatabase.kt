@@ -5,9 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [MenuItem::class], version = 1)
+@Database(entities = [MenuItem::class, Cart::class], version = 2)
+
 abstract class AppDatabase : RoomDatabase() {
     abstract fun menuDao(): MenuDao
+    abstract fun cartDao(): CartDao
+
 
     companion object {
         @Volatile
@@ -19,7 +22,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "arc_bistro_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

@@ -5,8 +5,9 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,24 +22,30 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -59,13 +67,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.arcbistro.R
-import com.example.arcbistro.data.menuItems
 import com.example.arcbistro.ui.theme.ArcBistroTheme
 import com.example.arcbistro.ui.theme.Brown01
 import com.example.arcbistro.ui.theme.LightGray04
+import com.example.arcbistro.ui.viewmodels.CartViewModel
+import com.example.arcbistro.ui.viewmodels.CartViewModelFactory
+import com.example.arcbistro.ui.viewmodels.HomeViewModel
+import com.example.arcbistro.ui.viewmodels.HomeViewModelFactory
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -88,7 +101,7 @@ fun SimpleTopBar(
             .padding( top = 16.dp),
         color = containerColor,
         tonalElevation = tonalElevation,
-        contentColor = MaterialTheme.colorScheme.onBackground,
+        contentColor = contentColorFor(containerColor),
         shape = RoundedCornerShape(0.dp)
     ) {
         Row(
@@ -124,48 +137,51 @@ fun SimpleTopBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ItemDetailScreen(itemId: Int, navController: NavController) {
+fun ItemDetailScreen(
+    itemId: Int, 
+    navController: NavController,
+    homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory),
+    cartViewModel: CartViewModel = viewModel(factory = CartViewModelFactory)
+) {
+    val menuItems by homeViewModel.menuItems.collectAsState()
     val item = menuItems.find { it.id == itemId } ?: return
-    var quantity by remember { mutableStateOf(0) }
+    
+    // Size state hoisted from SizeSelector
+    var selectedSize by remember { mutableStateOf("M") }
+    
+    // Observe quantity from the Database via CartViewModel
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val currentCartItem = cartItems.find { it.itemId == itemId && it.size == selectedSize }
+    val quantity = currentCartItem?.quantity ?: 0
 
-    // Get screen dimensions for boundary constraints
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
-    val fabSizePx = with(density) { 72.dp.toPx() } // Increased FAB size (60dp)
+    val fabSizePx = with(density) { 72.dp.toPx() }
     val paddingPx = with(density) { 16.dp.toPx() }
-    // Account for top bar: 56dp height + 16dp top padding + status bar (~24-48dp)
     val topBarHeightPx = with(density) { (56.dp + 16.dp + 48.dp).toPx() }
     val bottomBarHeightPx = with(density) { 80.dp.toPx() }
 
-    // Animatable offset for smooth snap animation
     val fabOffsetX = remember { Animatable(0f) }
     val fabOffsetY = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Helper function to snap to nearest edge with animation
     fun snapToNearestEdge(currentX: Float, currentY: Float) {
         coroutineScope.launch {
-            // Calculate edge boundaries
             val leftEdge = paddingPx
             val rightEdge = screenWidthPx - fabSizePx - paddingPx
-            val topEdge = topBarHeightPx + paddingPx // Start below the top bar
+            val topEdge = topBarHeightPx + paddingPx
             val bottomEdge = screenHeightPx - fabSizePx - paddingPx - bottomBarHeightPx
 
-            // Determine nearest horizontal edge (left or right)
             val targetX = if (currentX < screenWidthPx / 2) leftEdge else rightEdge
-
-            // Keep vertical position but clamp within bounds
             val targetY = currentY.coerceIn(topEdge, bottomEdge)
 
-            // Animate to target position with spring
             launch { fabOffsetX.animateTo(targetX, animationSpec = spring(stiffness = 300f)) }
             launch { fabOffsetY.animateTo(targetY, animationSpec = spring(stiffness = 300f)) }
         }
     }
 
-    // Initialize FAB at bottom-right corner on first composition
     LaunchedEffect(Unit) {
         val initialX = screenWidthPx - fabSizePx - paddingPx
         val initialY = screenHeightPx - fabSizePx - paddingPx - bottomBarHeightPx
@@ -202,23 +218,20 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     ) {
                         Text(text = "Price", color = LightGray04,style = MaterialTheme.typography.labelMedium)
                         Spacer(modifier=Modifier.height(4.dp))
-                        // Calculate total price based on quantity (default to unit price when quantity == 0)
                         val totalPrice = item.price * (if (quantity > 0) quantity else 1)
                         Text(
                             text = "$ ${String.format(Locale.US, "%.2f", totalPrice)}",
-                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 20.sp,color = Brown01),
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 20.sp, color = Brown01),
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Parent box sets the shared fixed width for both states, and animates size.
                     Box(modifier = Modifier.fillMaxWidth(0.7f).animateContentSize()) {
                         Crossfade(targetState = (quantity == 0)) { isZero ->
                             if (isZero) {
-                                // Fill the available parent box so button and card have identical size
                                 Button(
-                                    onClick = { quantity = 1 },
+                                    onClick = { cartViewModel.updateQuantity(item, selectedSize, 1) },
                                     modifier = Modifier.fillMaxSize(),
                                     colors = ButtonDefaults.buttonColors(containerColor = Brown01),
                                     shape = RoundedCornerShape(16.dp)
@@ -228,8 +241,8 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                             } else {
                                 QuantitySelector(
                                     quantity = quantity,
-                                    onIncrease = { if (quantity < 999) quantity++ },
-                                    onDecrease = { if (quantity > 0) quantity-- },
+                                    onIncrease = { cartViewModel.updateQuantity(item, selectedSize, quantity + 1) },
+                                    onDecrease = { cartViewModel.updateQuantity(item, selectedSize, quantity - 1) },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
@@ -248,14 +261,16 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     .padding(top = 16.dp)
 
             ) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
+                AsyncImage(
+                    model = item.imageUrl,
                     contentDescription = item.name,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(250.dp)
                         .clip(RoundedCornerShape(16.dp)),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+//                    placeholder = painterResource(R.drawable.coffee_placeholder),
+//                    error = painterResource(R.drawable.coffee_placeholder)
                 )
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -323,7 +338,7 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                 )
 
                 Text(
-                    text = "A cappuccino is an approximately 150 ml (5 oz) beverage, with 25 ml of espresso coffee and 85ml of fresh milk",
+                    text = item.subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = LightGray04
                 )
@@ -344,65 +359,45 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
                     modifier = Modifier
                         .height(12.dp)
                 )
-                SizeSelector()
+                SizeSelector(
+                    selectedSize = selectedSize,
+                    onSizeSelected = { selectedSize = it }
+                )
             }
 
-            // Draggable FAB overlay - shown only when quantity > 0
             if (quantity > 0) {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(2.dp, Brown01),
                     modifier = Modifier
-                        .offset {
-                            IntOffset(
-                                fabOffsetX.value.roundToInt(),
-                                fabOffsetY.value.roundToInt()
-                            )
-                        }
+                        .offset { IntOffset(fabOffsetX.value.roundToInt(), fabOffsetY.value.roundToInt()) }
                         .size(72.dp)
                         .pointerInput(Unit) {
                             detectDragGestures(
-                                onDragEnd = {
-                                    // Snap to nearest edge when drag ends
-                                    snapToNearestEdge(fabOffsetX.value, fabOffsetY.value)
-                                },
+                                onDragEnd = { snapToNearestEdge(fabOffsetX.value, fabOffsetY.value) },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
                                     coroutineScope.launch {
-                                        // Calculate new position
-                                        val newX = fabOffsetX.value + dragAmount.x
-                                        val newY = fabOffsetY.value + dragAmount.y
-
-                                        // Apply boundary constraints
-                                        val clampedX = newX.coerceIn(
-                                            paddingPx,
-                                            screenWidthPx - fabSizePx - paddingPx
-                                        )
-                                        val clampedY = newY.coerceIn(
-                                            topBarHeightPx + paddingPx, // Don't go above the top bar
-                                            screenHeightPx - fabSizePx - paddingPx - bottomBarHeightPx
-                                        )
-
-                                        // Update position immediately (no animation during drag)
+                                        val clampedX = (fabOffsetX.value + dragAmount.x).coerceIn(paddingPx, screenWidthPx - fabSizePx - paddingPx)
+                                        val clampedY = (fabOffsetY.value + dragAmount.y).coerceIn(topBarHeightPx + paddingPx, screenHeightPx - fabSizePx - paddingPx - bottomBarHeightPx)
                                         fabOffsetX.snapTo(clampedX)
                                         fabOffsetY.snapTo(clampedY)
                                     }
                                 }
                             )
-                        }
+                        },
+                    shape = CircleShape,
+                    color = Brown01,
+                    tonalElevation = 8.dp,
+                    shadowElevation = 8.dp
                 ) {
-                    FloatingActionButton(
+                    IconButton(
                         onClick = { navController.navigate("basket") },
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = Brown01,
-                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.bag),
                             contentDescription = "Basket",
-                            tint = Brown01
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }
@@ -413,38 +408,31 @@ fun ItemDetailScreen(itemId: Int, navController: NavController) {
 
 @Composable
 fun QuantitySelector(quantity: Int, onIncrease: () -> Unit, onDecrease: () -> Unit, modifier: Modifier = Modifier) {
-    // Display the number (we cap increments at 999 in the caller)
-    val displayText = quantity.toString()
-
     Card(
-        modifier = modifier
-            .animateContentSize(),
+        modifier = modifier.animateContentSize(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Brown01)
     ) {
         Row(
-            modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 6.dp)
-                .fillMaxSize(),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp).fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onDecrease, enabled = quantity > 0) {
-                Text(text = "-", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = onDecrease) {
+                Icon(imageVector = Icons.Default.Remove, contentDescription = "-", tint = Color.White)
             }
 
             Text(
-                text = displayText,
+                text = quantity.toString(),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
 
-            // Hide the plus button when we've reached the maximum (999)
             if (quantity < 999) {
                 IconButton(onClick = onIncrease) {
-                    Text(text = "+", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "+", tint = Color.White)
                 }
             }
         }
@@ -452,34 +440,31 @@ fun QuantitySelector(quantity: Int, onIncrease: () -> Unit, onDecrease: () -> Un
 }
 
 @Composable
-fun SizeSelector() {
-    var selectedSize by remember { mutableStateOf("M") }
+fun SizeSelector(selectedSize: String, onSizeSelected: (String) -> Unit) {
     val sizes = listOf("S", "M", "L")
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         sizes.forEach { size ->
             val isSelected = selectedSize == size
-
-            val colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSelected) Color(0xFFFFF5EE) else Color.Transparent,
-                contentColor = if (isSelected) Brown01 else Color.Black
-            )
-
-            val border = if (isSelected) {
-                BorderStroke(1.dp, Brush.horizontalGradient(listOf(Brown01,Color.Red)))
-            } else {
-                BorderStroke(1.dp, LightGray04)
-            }
-
-            OutlinedButton(
-                onClick = { selectedSize = size },
-                modifier = Modifier.weight(1f),
+            
+            Button(
+                onClick = { onSizeSelected(size) },
+                modifier = Modifier
+                    .weight(1f)
+                    .border(
+                        width = 1.dp,
+                        brush = if (isSelected) Brush.horizontalGradient(listOf(Brown01, Color.Red)) else SolidColor(LightGray04),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
                 shape = RoundedCornerShape(12.dp),
-                colors = colors,
-                border = border
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isSelected) Color(0xFFFFF5EE) else Color.Transparent,
+                    contentColor = if (isSelected) Brown01 else Color.Black
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 Text(text = size)
             }
@@ -497,9 +482,7 @@ fun IngredientIcon(iconRes: Int) {
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = null,
-            modifier = Modifier
-                .padding(8.dp)
-                .size(24.dp),
+            modifier = Modifier.padding(8.dp).size(24.dp),
             tint = Brown01
         )
     }

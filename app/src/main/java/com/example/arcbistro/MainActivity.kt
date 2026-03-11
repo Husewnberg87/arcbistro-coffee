@@ -22,6 +22,9 @@ import com.example.arcbistro.ui.screens.OrderResultScreen
 import com.example.arcbistro.ui.screens.OrderScreen
 import com.example.arcbistro.ui.screens.PaymentMethodScreen
 import com.example.arcbistro.ui.theme.ArcBistroTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.arcbistro.ui.viewmodels.HomeViewModel
+import com.example.arcbistro.ui.viewmodels.HomeViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
@@ -61,6 +64,7 @@ fun AppNavigation(startDestination: String) {
             })
         }
         composable("home") {
+            val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory)
             HomeScreen(navController = navController)
         }
         composable("basket") {
