@@ -23,6 +23,14 @@ I built this app to practice Android development with Jetpack Compose. It displa
 - Material Design 3
 - Navigation Component
 
+## Design
+
+The UI/UX design is based on the following Figma file and was not created by me.
+
+Figma: https://www.figma.com/design/No7snlvr1PPKGlH4ZQHAhs/Coffee-Shop-Mobile-App-Design--Community-?m=auto&t=pjHefkXdwrn4YKxX-6
+
+This project focuses on implementing the design using Jetpack Compose and modern Android architecture.
+
 ## Getting Started
 
 To run this project:
