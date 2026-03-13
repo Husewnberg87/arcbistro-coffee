@@ -342,11 +342,7 @@ fun ItemDetailScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = LightGray04
                 )
-                Text(
-                    text = ".. Read More",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Brown01
-                )
+
 
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
